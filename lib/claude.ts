@@ -5,6 +5,7 @@ export type WineType = "all" | "red" | "white" | "rose" | "sparkling";
 export interface Wine {
   name: string;
   price: string;
+  description: string;
   tastingNotes: string[];
   region: string;
   regionNotes: string;
@@ -16,6 +17,7 @@ Rules:
 - Extract the wine name (including vintage if shown) and price exactly as displayed
 - For tasting notes, use ONLY these grounded descriptors: acidic, mineral, tannic, full-bodied, medium-bodied, light-bodied, oaky, dry, sweet, off-dry, crisp, smooth, fruity, earthy, spicy, floral, herbaceous, buttery, chalky, rich, bright, bold, delicate, refreshing, complex, simple
 - NEVER invent specific flavor notes like "hints of sun-dried apricot" or "notes of toasted marshmallow"
+- For description, write ONE short sentence describing the grape or wine style in general terms (e.g., "Aglianico is a bold Southern Italian red grape known for firm tannins and dark fruit")
 - For region, state where the wine/grape is from
 - For regionNotes, write one sentence about whether the region is known for this grape/style
 - If you cannot read a wine clearly, skip it rather than guessing
@@ -27,6 +29,7 @@ Return ONLY valid JSON matching this schema, with no other text:
     {
       "name": "string",
       "price": "string",
+      "description": "string",
       "tastingNotes": ["string"],
       "region": "string",
       "regionNotes": "string"
@@ -39,13 +42,13 @@ const client = new Anthropic();
 export async function analyzeWineList(
   base64Image: string,
   mediaType: "image/jpeg" | "image/png" | "image/webp" | "image/gif",
-  wineType: WineType = "all"
+  wineTypes: WineType[] = ["all"]
 ): Promise<Wine[]> {
   let userText = "Analyze this wine list and return the structured JSON for every wine you can identify.";
 
-  if (wineType !== "all") {
-    const typeLabel = wineType === "rose" ? "rosé" : wineType;
-    userText = `Analyze this wine list and return the structured JSON for ONLY the ${typeLabel} wines. Skip all other wine types.`;
+  if (!wineTypes.includes("all")) {
+    const labels = wineTypes.map((t) => (t === "rose" ? "rosé" : t));
+    userText = `Analyze this wine list and return the structured JSON for ONLY the ${labels.join(" and ")} wines. Skip all other wine types.`;
   }
 
   const response = await client.messages.create({

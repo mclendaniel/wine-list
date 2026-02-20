@@ -18,10 +18,17 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [wineType, setWineType] = useState<WineType>("all");
-  const [lastImage, setLastImage] = useState<{ base64: string; mediaType: string } | null>(null);
+  const [selectedTypes, setSelectedTypes] = useState<WineType[]>(["all"]);
+  const [lastImage, setLastImage] = useState<{
+    base64: string;
+    mediaType: string;
+  } | null>(null);
 
-  async function analyze(base64: string, mediaType: string, type: WineType) {
+  async function analyze(
+    base64: string,
+    mediaType: string,
+    types: WineType[]
+  ) {
     setLoading(true);
     setError(null);
     setWines([]);
@@ -30,7 +37,7 @@ export default function Home() {
       const res = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image: base64, mediaType, wineType: type }),
+        body: JSON.stringify({ image: base64, mediaType, wineTypes: types }),
       });
 
       const data = await res.json();
@@ -50,13 +57,31 @@ export default function Home() {
   function handleAnalyze(base64: string, mediaType: string) {
     setImagePreview(`data:${mediaType};base64,${base64}`);
     setLastImage({ base64, mediaType });
-    analyze(base64, mediaType, wineType);
+    analyze(base64, mediaType, selectedTypes);
   }
 
   function handleFilterChange(type: WineType) {
-    setWineType(type);
+    let next: WineType[];
+
+    if (type === "all") {
+      next = ["all"];
+    } else {
+      // Remove "all" if present, then toggle the clicked type
+      const withoutAll = selectedTypes.filter((t) => t !== "all");
+      if (withoutAll.includes(type)) {
+        next = withoutAll.filter((t) => t !== type);
+      } else {
+        next = [...withoutAll, type];
+      }
+      // If nothing selected, go back to "all"
+      if (next.length === 0) {
+        next = ["all"];
+      }
+    }
+
+    setSelectedTypes(next);
     if (lastImage) {
-      analyze(lastImage.base64, lastImage.mediaType, type);
+      analyze(lastImage.base64, lastImage.mediaType, next);
     }
   }
 
@@ -78,7 +103,7 @@ export default function Home() {
             onClick={() => handleFilterChange(value)}
             disabled={loading}
             className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
-              wineType === value
+              selectedTypes.includes(value)
                 ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
                 : "bg-zinc-100 text-zinc-600 active:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:active:bg-zinc-700"
             } disabled:opacity-50`}

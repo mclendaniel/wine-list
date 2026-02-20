@@ -30,6 +30,10 @@ export default function WineResults({ wines }: WineResultsProps) {
               </span>
             </div>
 
+            <p className="mt-1.5 text-sm text-zinc-600 dark:text-zinc-400">
+              {wine.description}
+            </p>
+
             <div className="mt-2 flex flex-wrap gap-1.5">
               {wine.tastingNotes.map((note) => (
                 <span

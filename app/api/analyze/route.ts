@@ -14,7 +14,7 @@ const VALID_WINE_TYPES = new Set(["all", "red", "white", "rose", "sparkling"]);
 
 export async function POST(request: NextRequest) {
   try {
-    const { image, mediaType, wineType = "all" } = await request.json();
+    const { image, mediaType, wineTypes = ["all"] } = await request.json();
 
     if (!image || !mediaType) {
       return NextResponse.json(
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!VALID_WINE_TYPES.has(wineType)) {
+    if (!Array.isArray(wineTypes) || !wineTypes.every((t: string) => VALID_WINE_TYPES.has(t))) {
       return NextResponse.json(
         { error: "Invalid wine type filter." },
         { status: 400 }
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
     const wines = await analyzeWineList(
       image,
       mediaType as "image/jpeg" | "image/png" | "image/webp" | "image/gif",
-      wineType as WineType
+      wineTypes as WineType[]
     );
 
     return NextResponse.json({ wines });
