@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { analyzeWineList, WineType } from "@/lib/claude";
 
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 const VALID_TYPES = new Set([
   "image/jpeg",
