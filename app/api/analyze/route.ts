@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { analyzeWineList } from "@/lib/claude";
+import { analyzeWineList, WineType } from "@/lib/claude";
+
+export const maxDuration = 30;
 
 const VALID_TYPES = new Set([
   "image/jpeg",
@@ -8,11 +10,11 @@ const VALID_TYPES = new Set([
   "image/gif",
 ]);
 
-const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+const VALID_WINE_TYPES = new Set(["all", "red", "white", "rose", "sparkling"]);
 
 export async function POST(request: NextRequest) {
   try {
-    const { image, mediaType } = await request.json();
+    const { image, mediaType, wineType = "all" } = await request.json();
 
     if (!image || !mediaType) {
       return NextResponse.json(
@@ -28,33 +30,42 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check approximate base64 size
-    const sizeInBytes = (image.length * 3) / 4;
-    if (sizeInBytes > MAX_SIZE) {
+    if (!VALID_WINE_TYPES.has(wineType)) {
       return NextResponse.json(
-        { error: "Image too large. Maximum size is 10MB." },
+        { error: "Invalid wine type filter." },
         { status: 400 }
       );
     }
 
     const wines = await analyzeWineList(
       image,
-      mediaType as "image/jpeg" | "image/png" | "image/webp" | "image/gif"
+      mediaType as "image/jpeg" | "image/png" | "image/webp" | "image/gif",
+      wineType as WineType
     );
 
     return NextResponse.json({ wines });
   } catch (error) {
     console.error("Wine analysis error:", error);
 
+    const message =
+      error instanceof Error ? error.message : "Unknown error";
+
+    if (message.includes("authentication") || message.includes("api_key") || message.includes("401")) {
+      return NextResponse.json(
+        { error: "API key not configured. Add ANTHROPIC_API_KEY in Vercel environment variables." },
+        { status: 500 }
+      );
+    }
+
     if (error instanceof SyntaxError) {
       return NextResponse.json(
-        { error: "Failed to parse wine list from image. Try a clearer photo." },
+        { error: "Couldn't read that wine list. Try a clearer photo." },
         { status: 422 }
       );
     }
 
     return NextResponse.json(
-      { error: "Failed to analyze wine list. Please try again." },
+      { error: `Analysis failed: ${message}` },
       { status: 500 }
     );
   }

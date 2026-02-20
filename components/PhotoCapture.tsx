@@ -8,6 +8,33 @@ interface PhotoCaptureProps {
   imagePreview: string | null;
 }
 
+function compressImage(file: File, maxWidth = 1536): Promise<{ base64: string; mediaType: string }> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      let { width, height } = img;
+
+      if (width > maxWidth) {
+        height = (height * maxWidth) / width;
+        width = maxWidth;
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d")!;
+      ctx.drawImage(img, 0, 0, width, height);
+
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.8);
+      const [header, base64] = dataUrl.split(",");
+      const mediaType = header.match(/data:(.*?);/)?.[1] || "image/jpeg";
+      resolve({ base64, mediaType });
+    };
+    img.onerror = () => reject(new Error("Failed to load image"));
+    img.src = URL.createObjectURL(file);
+  });
+}
+
 export default function PhotoCapture({
   onAnalyze,
   loading,
@@ -15,21 +42,25 @@ export default function PhotoCapture({
 }: PhotoCaptureProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
-  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = reader.result as string;
-      // Extract base64 and media type from data URL
-      const [header, base64] = dataUrl.split(",");
-      const mediaType = header.match(/data:(.*?);/)?.[1] || "image/jpeg";
+    try {
+      const { base64, mediaType } = await compressImage(file);
       onAnalyze(base64, mediaType);
-    };
-    reader.readAsDataURL(file);
+    } catch {
+      // Fallback to raw file if compression fails
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = reader.result as string;
+        const [header, base64] = dataUrl.split(",");
+        const mediaType = header.match(/data:(.*?);/)?.[1] || "image/jpeg";
+        onAnalyze(base64, mediaType);
+      };
+      reader.readAsDataURL(file);
+    }
 
-    // Reset input so the same file can be re-selected
     e.target.value = "";
   }
 

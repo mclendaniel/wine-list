@@ -1,5 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 
+export type WineType = "all" | "red" | "white" | "rose" | "sparkling";
+
 export interface Wine {
   name: string;
   price: string;
@@ -8,7 +10,7 @@ export interface Wine {
   regionNotes: string;
 }
 
-const SYSTEM_PROMPT = `You are a practical sommelier. Given a photo of a wine list or menu, extract every wine you can identify and provide honest, grounded tasting information.
+const SYSTEM_PROMPT = `You are a practical sommelier. Given a photo of a wine list or menu, extract wines and provide honest, grounded tasting information.
 
 Rules:
 - Extract the wine name (including vintage if shown) and price exactly as displayed
@@ -36,8 +38,16 @@ const client = new Anthropic();
 
 export async function analyzeWineList(
   base64Image: string,
-  mediaType: "image/jpeg" | "image/png" | "image/webp" | "image/gif"
+  mediaType: "image/jpeg" | "image/png" | "image/webp" | "image/gif",
+  wineType: WineType = "all"
 ): Promise<Wine[]> {
+  let userText = "Analyze this wine list and return the structured JSON for every wine you can identify.";
+
+  if (wineType !== "all") {
+    const typeLabel = wineType === "rose" ? "rosé" : wineType;
+    userText = `Analyze this wine list and return the structured JSON for ONLY the ${typeLabel} wines. Skip all other wine types.`;
+  }
+
   const response = await client.messages.create({
     model: "claude-sonnet-4-5-20250929",
     max_tokens: 4096,
@@ -56,7 +66,7 @@ export async function analyzeWineList(
           },
           {
             type: "text",
-            text: "Analyze this wine list and return the structured JSON for every wine you can identify.",
+            text: userText,
           },
         ],
       },

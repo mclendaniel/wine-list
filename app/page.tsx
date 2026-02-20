@@ -3,25 +3,34 @@
 import { useState } from "react";
 import PhotoCapture from "@/components/PhotoCapture";
 import WineResults from "@/components/WineResults";
-import type { Wine } from "@/lib/claude";
+import type { Wine, WineType } from "@/lib/claude";
+
+const WINE_TYPES: { value: WineType; label: string }[] = [
+  { value: "all", label: "All" },
+  { value: "red", label: "Red" },
+  { value: "white", label: "White" },
+  { value: "rose", label: "Rosé" },
+  { value: "sparkling", label: "Sparkling" },
+];
 
 export default function Home() {
   const [wines, setWines] = useState<Wine[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [wineType, setWineType] = useState<WineType>("all");
+  const [lastImage, setLastImage] = useState<{ base64: string; mediaType: string } | null>(null);
 
-  async function handleAnalyze(base64: string, mediaType: string) {
+  async function analyze(base64: string, mediaType: string, type: WineType) {
     setLoading(true);
     setError(null);
     setWines([]);
-    setImagePreview(`data:${mediaType};base64,${base64}`);
 
     try {
       const res = await fetch("/api/analyze", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image: base64, mediaType }),
+        body: JSON.stringify({ image: base64, mediaType, wineType: type }),
       });
 
       const data = await res.json();
@@ -32,11 +41,22 @@ export default function Home() {
 
       setWines(data.wines);
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Something went wrong"
-      );
+      setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setLoading(false);
+    }
+  }
+
+  function handleAnalyze(base64: string, mediaType: string) {
+    setImagePreview(`data:${mediaType};base64,${base64}`);
+    setLastImage({ base64, mediaType });
+    analyze(base64, mediaType, wineType);
+  }
+
+  function handleFilterChange(type: WineType) {
+    setWineType(type);
+    if (lastImage) {
+      analyze(lastImage.base64, lastImage.mediaType, type);
     }
   }
 
@@ -50,6 +70,23 @@ export default function Home() {
           Snap a photo of a wine menu for instant tasting notes
         </p>
       </header>
+
+      <div className="flex gap-2">
+        {WINE_TYPES.map(({ value, label }) => (
+          <button
+            key={value}
+            onClick={() => handleFilterChange(value)}
+            disabled={loading}
+            className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${
+              wineType === value
+                ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
+                : "bg-zinc-100 text-zinc-600 active:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:active:bg-zinc-700"
+            } disabled:opacity-50`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
 
       <PhotoCapture
         onAnalyze={handleAnalyze}
