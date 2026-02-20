@@ -30,27 +30,27 @@ export default function WineResults({ wines }: WineResultsProps) {
               </span>
             </div>
 
-            <p className="mt-1.5 text-sm text-zinc-600 dark:text-zinc-400">
-              {wine.description}
+            <p className="mt-1.5 text-sm text-zinc-500 dark:text-zinc-400">
+              {wine.regionNotes}
             </p>
 
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {wine.tastingNotes.map((note) => (
+            <div className="mt-2.5 flex flex-wrap gap-1.5">
+              {wine.tastingNotes.map(({ descriptor, rating }) => (
                 <span
-                  key={note}
-                  className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+                  key={descriptor}
+                  className="flex items-center gap-1 rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
                 >
-                  {note}
+                  <span
+                    className="inline-block h-1.5 rounded-full bg-zinc-400 dark:bg-zinc-500"
+                    style={{ width: `${rating * 3}px` }}
+                  />
+                  {rating}/10 {descriptor}
                 </span>
               ))}
             </div>
 
-            <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
-              <span className="font-medium text-zinc-700 dark:text-zinc-300">
-                {wine.region}
-              </span>
-              {" — "}
-              {wine.regionNotes}
+            <p className="mt-2.5 text-sm italic text-zinc-500 dark:text-zinc-400">
+              {wine.story}
             </p>
           </div>
         ))}

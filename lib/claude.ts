@@ -2,24 +2,26 @@ import Anthropic from "@anthropic-ai/sdk";
 
 export type WineType = "all" | "red" | "white" | "rose" | "sparkling";
 
+export interface TastingNote {
+  descriptor: string;
+  rating: number;
+}
+
 export interface Wine {
   name: string;
   price: string;
-  description: string;
-  tastingNotes: string[];
-  region: string;
   regionNotes: string;
+  tastingNotes: TastingNote[];
+  story: string;
 }
 
 const SYSTEM_PROMPT = `You are a practical sommelier. Given a photo of a wine list or menu, extract wines and provide honest, grounded tasting information.
 
 Rules:
 - Extract the wine name (including vintage if shown) and price exactly as displayed
-- For tasting notes, use ONLY these grounded descriptors: acidic, mineral, tannic, full-bodied, medium-bodied, light-bodied, oaky, dry, sweet, off-dry, crisp, smooth, fruity, earthy, spicy, floral, herbaceous, buttery, chalky, rich, bright, bold, delicate, refreshing, complex, simple
-- NEVER invent specific flavor notes like "hints of sun-dried apricot" or "notes of toasted marshmallow"
-- For description, write ONE short sentence describing the grape or wine style in general terms (e.g., "Aglianico is a bold Southern Italian red grape known for firm tannins and dark fruit")
-- For region, state where the wine/grape is from
-- For regionNotes, write one sentence about whether the region is known for this grape/style
+- For regionNotes, state where the wine is from and one sentence on whether the region is known for this grape/style
+- For tastingNotes, rate ONLY the relevant descriptors on a 1-10 scale. Only include descriptors that score 4 or above — omit anything the wine is not notably characterized by. Available descriptors: acidic, mineral, tannic, full-bodied, light-bodied, oaky, dry, sweet, crisp, smooth, fruity, earthy, spicy, floral, herbaceous, buttery, chalky, rich, bright, bold, delicate
+- For story, write 1-2 sentences with an interesting fact about this specific wine, vineyard, or winemaker. Something someone at a dinner table would find genuinely interesting — history, a quirky production method, the founder's background, an award, etc. If you don't know anything specific, write about something notable about the grape variety in this region.
 - If you cannot read a wine clearly, skip it rather than guessing
 - If the image is not a wine list, return an empty array
 
@@ -29,10 +31,9 @@ Return ONLY valid JSON matching this schema, with no other text:
     {
       "name": "string",
       "price": "string",
-      "description": "string",
-      "tastingNotes": ["string"],
-      "region": "string",
-      "regionNotes": "string"
+      "regionNotes": "string",
+      "tastingNotes": [{"descriptor": "string", "rating": number}],
+      "story": "string"
     }
   ]
 }`;
