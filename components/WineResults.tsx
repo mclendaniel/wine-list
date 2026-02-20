@@ -38,15 +38,17 @@ export default function WineResults({ wines }: WineResultsProps) {
               {wine.regionNotes}
             </p>
 
-            <div className="mt-2.5 flex flex-wrap gap-1.5">
-              {wine.tastingNotes.map(({ descriptor, rating }) => (
-                <span
-                  key={descriptor}
-                  className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
-                >
-                  {rating}/10 {descriptor}
-                </span>
-              ))}
+            <div className="mt-2.5 grid grid-cols-2 gap-1.5">
+              {[...wine.tastingNotes]
+                .sort((a, b) => b.rating - a.rating)
+                .map(({ descriptor, rating }) => (
+                  <span
+                    key={descriptor}
+                    className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-center text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+                  >
+                    {rating}/10 {descriptor}
+                  </span>
+                ))}
             </div>
 
             <p className="mt-2.5 text-sm italic text-zinc-500 dark:text-zinc-400">
