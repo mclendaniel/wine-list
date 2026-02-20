@@ -30,6 +30,10 @@ export default function WineResults({ wines }: WineResultsProps) {
               </span>
             </div>
 
+            <p className="mt-1 text-sm font-medium italic text-zinc-800 dark:text-zinc-200">
+              {wine.vibe}
+            </p>
+
             <p className="mt-1.5 text-sm text-zinc-500 dark:text-zinc-400">
               {wine.regionNotes}
             </p>
