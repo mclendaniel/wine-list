@@ -42,12 +42,8 @@ export default function WineResults({ wines }: WineResultsProps) {
               {wine.tastingNotes.map(({ descriptor, rating }) => (
                 <span
                   key={descriptor}
-                  className="flex items-center gap-1 rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+                  className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-xs font-medium text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
                 >
-                  <span
-                    className="inline-block h-1.5 rounded-full bg-zinc-400 dark:bg-zinc-500"
-                    style={{ width: `${rating * 3}px` }}
-                  />
                   {rating}/10 {descriptor}
                 </span>
               ))}
